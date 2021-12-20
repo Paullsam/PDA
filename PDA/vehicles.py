@@ -12,14 +12,6 @@ class CarBase:
         file_name, file_type = os.path.splitext(self.photo_file_name)
         return file_type
 
-    def get_car_list(self):
-        try:
-            with open(self.csv_filename) as csv_file:
-                reader = csv.reader(csv_file, delimiter=';')
-                next(reader)
-        except FileNotFoundError:
-            return 'File does not exist'
-
 
 class Car(CarBase):
     def __init__(self, brand, photo_file_name, carrying, passengers_seats_account, car_type='car'):
@@ -62,3 +54,58 @@ class SpecMachine(CarBase):
     @property
     def car_type(self):
         return 'spec_machine'
+
+
+def get_car_list(file_name):
+    try:
+        cars_in_file = []
+        car_list = []
+        with open(file_name) as csv_file:
+            reader = csv.reader(csv_file, delimiter=';')
+            next(reader)
+            for row in reader:
+                cars_in_file.append(row[0].split(','))
+            for cars in cars_in_file:
+                if cars[0] == 'car':
+                    args = cars[1:]
+                    car_list.append(Car(*args))
+                else:
+                    if cars[0] == 'truck':
+                        args = cars[1:]
+                        car_list.append(Truck(*args))
+                    else:
+                        if cars[0] == 'scec_machine':
+                            args = cars[1:]
+                            car_list.append(SpecMachine(*args))
+    except FileNotFoundError:
+        return 'File does not exist'
+    return car_list
+
+
+def get_car_list(file_name):
+    try:
+        cars_in_file = []
+        car_list = []
+        with open(file_name) as csv_file:
+            reader = csv.reader(csv_file, delimiter=';')
+            next(reader)
+            for row in reader:
+                cars_in_file.append(row[0].split(','))
+            for cars in cars_in_file:
+                if cars[0] == 'car':
+                    cars.append(cars.pop(0))
+                    cars = [x for x in cars if x != '']
+                    car_list.append(Car(*cars))
+                else:
+                    if cars[0] == 'truck':
+                        cars.append(cars.pop(0))
+                        cars = [x for x in cars if x != '']
+                        car_list.append(Truck(*cars))
+                    else:
+                        if cars[0] == 'spec_machine':
+                            cars.append(cars.pop(0))
+                            cars = [x for x in cars if x != '']
+                            car_list.append(SpecMachine(*cars))
+    except FileNotFoundError:
+        return 'File does not exist'
+    return car_list
