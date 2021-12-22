@@ -6,7 +6,7 @@ class CarBase:
     def __init__(self, brand, photo_file_name, carrying):
         self.photo_file_name = photo_file_name
         self.brand = brand
-        self.carrying = carrying
+        self.carrying = float(carrying)
 
     def get_photo_file_ext(self):
         file_name, file_type = os.path.splitext(self.photo_file_name)
@@ -14,9 +14,9 @@ class CarBase:
 
 
 class Car(CarBase):
-    def __init__(self, brand, photo_file_name, carrying, passengers_seats_account, car_type='car'):
+    def __init__(self, brand, photo_file_name, carrying, passenger_seats_count, car_type='car'):
         super().__init__(brand, photo_file_name, carrying)
-        self.passengers_seats_account = passengers_seats_account
+        self.passenger_seats_count = int(passenger_seats_count)
         self._car_type = car_type
 
     @property
@@ -25,16 +25,17 @@ class Car(CarBase):
 
 
 class Truck(CarBase):
-    def __init__(self, brand, photo_file_name, carrying, body_whl=None, car_type='truck'):
+    def __init__(self, brand, photo_file_name, carrying, body_whl=None, car_type='truck',
+                 body_length=None, body_width=None, body_height=None):
         super().__init__(brand, photo_file_name, carrying)
         self._car_type = car_type
         try:
-            self.body_width, self.body_height, self.body_lenght = map(float, body_whl.split('x'))
+            self.body_length, self.body_width, self.body_height = map(float, body_whl.split('x'))
             return
         except AttributeError:
-            self.body_width, self.body_height, self.body_lenght = 0, 0, 0
+            self.body_length, self.body_width, self.body_height = float(0), float(0), float(0)
         except ValueError:
-            self.body_width, self.body_height, self.body_lenght = 0, 0, 0
+            self.body_length, self.body_width, self.body_height = float(0), float(0), float(0)
             return
 
     @property
@@ -42,7 +43,7 @@ class Truck(CarBase):
         return 'truck'
 
     def get_body_volume(self):
-        return self.body_width * self.body_height * self.body_lenght
+        return self.body_width * self.body_height * self.body_length
 
 
 class SpecMachine(CarBase):
@@ -58,54 +59,37 @@ class SpecMachine(CarBase):
 
 def get_car_list(file_name):
     try:
-        cars_in_file = []
         car_list = []
         with open(file_name) as csv_file:
-            reader = csv.reader(csv_file, delimiter=';')
-            next(reader)
+            reader = csv.DictReader(csv_file)
             for row in reader:
-                cars_in_file.append(row[0].split(','))
-            for cars in cars_in_file:
-                if cars[0] == 'car':
-                    args = cars[1:]
-                    car_list.append(Car(*args))
+                if 'car_type' in row and row['car_type'] == 'car':
+                    try:
+                        if row['brand'] != '' and row['photo_file_name'] != '' and '.' in row['photo_file_name'] \
+                                and int(row['passenger_seats_count']) > 0 and float(row['carrying']) > 0:
+                            car_list.append(Car(row['brand'], row['photo_file_name'], float(row['carrying']),
+                                                int(row['passenger_seats_count'])))
+                    except (ValueError, KeyError):
+                        pass
+                if 'car_type' in row and row['car_type'] == 'truck':
+                    try:
+                        if row['brand'] != '' and row['photo_file_name'] != '' and '.' in row['photo_file_name'] \
+                                and float(row['carrying']) > 0:
+                            car_list.append(Truck(row['brand'], row['photo_file_name'], float(row['carrying']),
+                                                  row['body_whl']))
+                    except (ValueError, KeyError):
+                        pass
+                if 'car_type' in row and row['car_type'] == 'spec_machine':
+                    try:
+                        if row['brand'] != '' and row['photo_file_name'] != '' and '.' in row['photo_file_name'] \
+                                and float(row['carrying']) > 0 and row['extra'] != '':
+                            car_list.append(SpecMachine(row['brand'], row['photo_file_name'], float(row['carrying']),
+                                                        row['extra']))
+                    except (ValueError, KeyError):
+                        pass
                 else:
-                    if cars[0] == 'truck':
-                        args = cars[1:]
-                        car_list.append(Truck(*args))
-                    else:
-                        if cars[0] == 'scec_machine':
-                            args = cars[1:]
-                            car_list.append(SpecMachine(*args))
+                    pass
+        return car_list
     except FileNotFoundError:
         return 'File does not exist'
-    return car_list
-
-
-def get_car_list(file_name):
-    try:
-        cars_in_file = []
-        car_list = []
-        with open(file_name) as csv_file:
-            reader = csv.reader(csv_file, delimiter=';')
-            next(reader)
-            for row in reader:
-                cars_in_file.append(row[0].split(','))
-            for cars in cars_in_file:
-                if cars[0] == 'car':
-                    cars.append(cars.pop(0))
-                    cars = [x for x in cars if x != '']
-                    car_list.append(Car(*cars))
-                else:
-                    if cars[0] == 'truck':
-                        cars.append(cars.pop(0))
-                        cars = [x for x in cars if x != '']
-                        car_list.append(Truck(*cars))
-                    else:
-                        if cars[0] == 'spec_machine':
-                            cars.append(cars.pop(0))
-                            cars = [x for x in cars if x != '']
-                            car_list.append(SpecMachine(*cars))
-    except FileNotFoundError:
-        return 'File does not exist'
-    return car_list
+    return
