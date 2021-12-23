@@ -61,7 +61,7 @@ def get_car_list(file_name):
     try:
         car_list = []
         with open(file_name) as csv_file:
-            reader = csv.DictReader(csv_file)
+            reader = csv.DictReader(csv_file, delimiter=';')
             for row in reader:
                 if 'car_type' in row and row['car_type'] == 'car':
                     try:
